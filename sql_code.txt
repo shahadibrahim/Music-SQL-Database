@@ -1,0 +1,51 @@
+/*Q1:the most popular music Genre for each country*/
+select sub1. bbiling, sub1.nname,sub1.mmax,sub1.rrank
+from(
+select sub. bbiling, sub.nname,sub.mmax,rank() over (partition by sub.bbiling order by sub.mmax DESC )as rrank
+
+from
+(select count(track.genreID) mmax,Invoice.BillingCountry bbiling,Genre.Name nname
+from Track
+JOIN InvoiceLine
+ON track.TrackId=InvoiceLine.TrackId
+JOIN Invoice
+ON InvoiceLine.InvoiceId=Invoice.InvoiceId
+JOIN Genre
+ON Genre.GenreId=Track.GenreId
+
+group by 2,3
+order by 1 DESC)sub)sub1
+where sub1.rrank LIKE '1';
+
+/*Q2:How many songs that have a song length longer than the average song length*/
+select Track.Milliseconds,Track.Name song_name,Album.Title album_Name
+from Track
+JOIN Album
+ON Album.AlbumId=Track.AlbumId
+where Track.Milliseconds>(select avg(track.milliseconds)
+from Track)
+order by 1 DESC;
+
+/*Q3:Who`s the customer that has spent the most on music for each country*/
+select max(totalSpent)totalSpent,Country,Customerid,FirstName,LastName
+
+from(select sum(invoice.total) totalSpent,Invoice.CustomerId Customerid,Customer.FirstName FirstName,Customer.LastName LastName,Invoice.BillingCountry Country
+from Invoice
+JOIN Customer
+ON Customer.CustomerId=Invoice.CustomerId
+group by 2
+order by 1 DESC)sub
+group by 2
+order by 1 ;
+/*Q4:Which album has the most sales*/
+select (count(InvoiceLine.Quantity))*InvoiceLine.UnitPrice AS TOTALAMOUNT, Album.AlbumId,Album.Title
+from InvoiceLine
+JOIN Track
+ON Track.TrackId=InvoiceLine.TrackId
+JOIN Album
+ON Album.AlbumId=Track.AlbumId
+
+group by 2
+
+order by 1 DESC
+limit 10 ;
